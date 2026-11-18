@@ -1,0 +1,13 @@
+# Hostinger / shared hosting: the whole Laravel project lives in public_html.
+# Send every request to the /public folder so .env, storage, vendor etc. are never served.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Extra safety: block dotfiles (.env, .git ...) and common sensitive files if rewrite is off
+<FilesMatch "^\.|composer\.(json|lock)$|artisan$|package\.json$|phpunit\.xml$">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes
