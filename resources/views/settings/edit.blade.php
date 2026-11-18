@@ -93,4 +93,114 @@
         <button class="btn btn-git px-4"><i class="bi bi-save"></i> Save Settings</button>
     </div>
 </form>
+
+{{-- ============ SMTP (Gmail) ============ --}}
+<h2 class="h5 mt-5 mb-1" id="smtp">Email (SMTP) Settings</h2>
+<p class="text-muted small mb-3">Used to send the OTP for "Forgot password". Gmail is filled in by default.</p>
+
+<div class="card mb-3">
+    <form method="POST" action="{{ route('settings.mail.update') }}">
+        @csrf
+        <div class="card-body">
+            <div class="alert alert-info small mb-3">
+                <strong>Gmail setup:</strong> turn on 2-Step Verification on the Gmail account, then create an
+                <strong>App Password</strong> at <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>.
+                Paste that 16-letter app password below. Your normal Gmail password will not work.
+            </div>
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label" for="smtp_host">SMTP Host *</label>
+                    <input type="text" id="smtp_host" name="smtp_host" value="{{ old('smtp_host', $mail->host) }}" class="form-control @error('smtp_host', 'mail') is-invalid @enderror">
+                    @error('smtp_host', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="smtp_port">Port *</label>
+                    <input type="number" id="smtp_port" name="smtp_port" value="{{ old('smtp_port', $mail->port) }}" class="form-control @error('smtp_port', 'mail') is-invalid @enderror">
+                    @error('smtp_port', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="smtp_encryption">Encryption *</label>
+                    @php $enc = old('smtp_encryption', $mail->encryption); @endphp
+                    <select id="smtp_encryption" name="smtp_encryption" class="form-select">
+                        <option value="tls" @selected($enc === 'tls')>TLS (port 587)</option>
+                        <option value="ssl" @selected($enc === 'ssl')>SSL (port 465)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="smtp_username">Gmail Address (username) *</label>
+                    <input type="email" id="smtp_username" name="smtp_username" value="{{ old('smtp_username', $mail->username) }}" class="form-control @error('smtp_username', 'mail') is-invalid @enderror" placeholder="yourname@gmail.com" autocomplete="off">
+                    @error('smtp_username', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="smtp_password">Gmail App Password {{ $mail->smtpPassword() ? '' : '*' }}</label>
+                    <input type="password" id="smtp_password" name="smtp_password" class="form-control @error('smtp_password', 'mail') is-invalid @enderror" placeholder="{{ $mail->smtpPassword() ? 'Saved - leave blank to keep' : 'xxxx xxxx xxxx xxxx' }}" autocomplete="new-password">
+                    @error('smtp_password', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="from_address">From Email (optional)</label>
+                    <input type="email" id="from_address" name="from_address" value="{{ old('from_address', $mail->from_address) }}" class="form-control @error('from_address', 'mail') is-invalid @enderror" placeholder="Same as Gmail address">
+                    @error('from_address', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="from_name">From Name (optional)</label>
+                    <input type="text" id="from_name" name="from_name" value="{{ old('from_name', $mail->from_name) }}" class="form-control" placeholder="{{ $company->company_name }}">
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="small {{ $mail->isConfigured() ? 'text-success' : 'text-muted' }}">
+                <i class="bi {{ $mail->isConfigured() ? 'bi-check-circle' : 'bi-dash-circle' }}"></i>
+                {{ $mail->isConfigured() ? 'SMTP is set up' : 'SMTP not set up yet' }}
+            </span>
+            <button class="btn btn-git px-4"><i class="bi bi-save"></i> Save SMTP Settings</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ route('settings.mail.test') }}" class="card-body">
+        @csrf
+        <label class="form-label" for="test_to">Send a test email</label>
+        <div class="input-group" style="max-width: 520px;">
+            <input type="email" id="test_to" name="test_to" value="{{ old('test_to', $user->email) }}" class="form-control @error('test_to', 'mail') is-invalid @enderror" required>
+            <button class="btn btn-outline-primary" @disabled(! $mail->isConfigured())><i class="bi bi-send"></i> Send Test</button>
+            @error('test_to', 'mail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+    </form>
+</div>
+
+{{-- ============ Login account ============ --}}
+<h2 class="h5 mt-5 mb-1" id="account">Login Account</h2>
+<p class="text-muted small mb-3">The "Forgot password" OTP is sent to this email, so use a real inbox you can open.</p>
+
+<form method="POST" action="{{ route('settings.account.update') }}" class="card mb-4"
+      data-confirm="Update the login email / password? You will use the new details next time you log in." data-confirm-button="Yes, update">
+    @csrf
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="login_email">Login Email *</label>
+                <input type="email" id="login_email" name="login_email" value="{{ old('login_email', $user->email) }}" class="form-control @error('login_email', 'account') is-invalid @enderror" required>
+                @error('login_email', 'account')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="current_password">Current Password *</label>
+                <input type="password" id="current_password" name="current_password" class="form-control @error('current_password', 'account') is-invalid @enderror" autocomplete="current-password" required>
+                @error('current_password', 'account')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="new_password">New Password</label>
+                <input type="password" id="new_password" name="new_password" class="form-control @error('new_password', 'account') is-invalid @enderror" autocomplete="new-password" placeholder="Leave blank to keep the current one">
+                @error('new_password', 'account')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="new_password_confirmation">Confirm New Password</label>
+                <input type="password" id="new_password_confirmation" name="new_password_confirmation" class="form-control" autocomplete="new-password">
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-white text-end">
+        <button class="btn btn-git px-4"><i class="bi bi-person-check"></i> Update Login Account</button>
+    </div>
+</form>
 @endsection

@@ -2,16 +2,106 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\TestMail;
 use App\Models\CompanySetting;
+use App\Models\MailSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
-    public function edit()
+    public function edit(Request $request)
     {
-        return view('settings.edit', ['company' => CompanySetting::current()]);
+        return view('settings.edit', [
+            'company' => CompanySetting::current(),
+            'mail' => MailSetting::current(),
+            'user' => $request->user(),
+        ]);
+    }
+
+    /** SMTP (Gmail) settings used for password-reset OTP emails. */
+    public function updateMail(Request $request)
+    {
+        $mail = MailSetting::current();
+
+        $data = $request->validateWithBag('mail', [
+            'smtp_host' => ['required', 'string', 'max:255'],
+            'smtp_port' => ['required', 'integer', 'between:1,65535'],
+            'smtp_encryption' => ['required', Rule::in(['tls', 'ssl'])],
+            'smtp_username' => ['required', 'email', 'max:255'],
+            'smtp_password' => [$mail->smtpPassword() ? 'nullable' : 'required', 'string', 'max:255'],
+            'from_address' => ['nullable', 'email', 'max:255'],
+            'from_name' => ['nullable', 'string', 'max:255'],
+        ], [
+            'smtp_password.required' => 'Enter the Gmail App Password.',
+        ]);
+
+        $mail->fill([
+            'host' => trim($data['smtp_host']),
+            'port' => $data['smtp_port'],
+            'encryption' => $data['smtp_encryption'],
+            'username' => trim($data['smtp_username']),
+            'from_address' => $data['from_address'] ?? null,
+            'from_name' => $data['from_name'] ?? null,
+        ]);
+
+        if (! empty($data['smtp_password'])) {
+            // Gmail shows app passwords in groups of 4 with spaces; spaces are not part of it
+            $mail->setSmtpPassword(str_replace(' ', '', $data['smtp_password']));
+        }
+
+        $mail->save();
+
+        return redirect()->to(route('settings.edit').'#smtp')->with('success', 'SMTP settings saved. Send a test email to check them.');
+    }
+
+    public function testMail(Request $request)
+    {
+        $data = $request->validateWithBag('mail', ['test_to' => ['required', 'email']]);
+        $mail = MailSetting::current();
+
+        if (! $mail->isConfigured()) {
+            return redirect()->to(route('settings.edit').'#smtp')->with('error', 'Save the SMTP settings first.');
+        }
+
+        try {
+            $mail->apply();
+            Mail::to($data['test_to'])->send(new TestMail);
+        } catch (\Throwable $e) {
+            Log::warning('SMTP test failed: '.$e->getMessage());
+
+            return redirect()->to(route('settings.edit').'#smtp')
+                ->with('error', 'Test email failed: '.$e->getMessage());
+        }
+
+        return redirect()->to(route('settings.edit').'#smtp')->with('success', "Test email sent to {$data['test_to']}. Check the inbox (and spam).");
+    }
+
+    /** Login email and password of the single user. */
+    public function updateAccount(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validateWithBag('account', [
+            'login_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'current_password' => ['required', 'current_password'],
+            'new_password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.current_password' => 'Current password is not correct.',
+        ]);
+
+        $user->email = $data['login_email'];
+        if (! empty($data['new_password'])) {
+            $user->password = Hash::make($data['new_password']);
+        }
+        $user->save();
+
+        return redirect()->to(route('settings.edit').'#account')->with('success', 'Login account updated.');
     }
 
     public function update(Request $request)

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\SettingsController;
 use App\Models\Bill;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,11 @@ Route::get('/install/{key}', InstallController::class)->middleware('throttle:5,1
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+
+    Route::get('/forgot-password', [PasswordResetController::class, 'showForgot'])->name('password.forgot');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp'])->name('password.send-otp')->middleware('throttle:6,10');
+    Route::get('/reset-password', [PasswordResetController::class, 'showReset'])->name('password.reset.form');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.reset')->middleware('throttle:10,10');
 });
 
 Route::middleware('auth')->group(function () {
@@ -26,6 +32,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/smtp', [SettingsController::class, 'updateMail'])->name('settings.mail.update');
+    Route::post('/settings/smtp/test', [SettingsController::class, 'testMail'])->name('settings.mail.test')->middleware('throttle:5,1');
+    Route::post('/settings/account', [SettingsController::class, 'updateAccount'])->name('settings.account.update');
 
     Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
     Route::get('/bills/create', [BillController::class, 'create'])->name('bills.create');
