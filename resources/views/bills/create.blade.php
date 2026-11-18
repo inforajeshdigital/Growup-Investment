@@ -1,22 +1,28 @@
 @extends('layouts.app')
 
-@section('title', 'Generate Bill')
-
 @php
+    $editing = isset($bill);
     $v = fn ($key, $default = '') => old($key, $d[$key] ?? $default);
 @endphp
 
+@section('title', $editing ? 'Edit Bill '.$bill->bill_no : 'Generate Bill')
+
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Generate New Bill</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0">{{ $editing ? 'Edit Bill '.$bill->bill_no : 'Generate New Bill' }}</h1>
+    @if ($editing)
+        <a href="{{ route('bills.show', $bill) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Bill</a>
+    @endif
 </div>
 
 @if ($errors->any())
     <div class="alert alert-danger">Please correct the highlighted fields.</div>
 @endif
 
-<form method="POST" action="{{ route('bills.preview') }}" enctype="multipart/form-data" class="card" novalidate>
+<form method="POST" action="{{ $editing ? route('bills.update', $bill) : route('bills.preview') }}" enctype="multipart/form-data" class="card" novalidate
+      @if ($editing) data-confirm="Save the changes to bill {{ $bill->bill_no }}? The PDF will be created again with the new details." data-confirm-button="Yes, update" @endif>
     @csrf
+    @if ($editing) @method('PUT') @endif
     <div class="card-body">
         <h2 class="h6 text-uppercase text-muted mb-3">Investor Details</h2>
         <div class="row g-3">
@@ -131,7 +137,11 @@
         </div>
     </div>
     <div class="card-footer bg-white text-end">
-        <button class="btn btn-git px-4"><i class="bi bi-eye"></i> Preview Bill</button>
+        @if ($editing)
+            <button class="btn btn-git px-4"><i class="bi bi-save"></i> Update Bill</button>
+        @else
+            <button class="btn btn-git px-4"><i class="bi bi-eye"></i> Preview Bill</button>
+        @endif
     </div>
 </form>
 @endsection

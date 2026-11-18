@@ -39,7 +39,14 @@
                     <td>{{ $bill->bill_date->format('d-m-Y') }}</td>
                     <td class="text-end text-nowrap">
                         <a href="{{ route('bills.show', $bill) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View Bill</a>
-                        <a href="{{ route('bills.pdf', $bill) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
+                        <a href="{{ route('bills.pdf', $bill) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
+                        <a href="{{ route('bills.edit', $bill) }}" class="btn btn-sm btn-outline-warning" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
+                        <form method="POST" action="{{ route('bills.destroy', $bill) }}" class="d-inline"
+                              data-confirm="Delete bill {{ $bill->bill_no }} of {{ $bill->investor_name }}? This cannot be undone." data-confirm-button="Yes, delete" data-confirm-variant="danger">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i> Delete</button>
+                        </form>
                     </td>
                 </tr>
             @empty

@@ -129,6 +129,52 @@ class BillController extends Controller
         return view('bills.show', $this->receiptVars($this->billArray($bill), $bill->company) + ['bill' => $bill]);
     }
 
+    public function edit(Bill $bill)
+    {
+        return view('bills.create', [
+            'd' => $this->billArray($bill),
+            'bill' => $bill,
+            'hasDraftFile' => (bool) $bill->income_proof_file,
+            'draftFileName' => $bill->income_proof_original_name,
+        ]);
+    }
+
+    /** Save changes to a generated bill. Bill number and company details stay the same. */
+    public function update(Request $request, Bill $bill)
+    {
+        $data = $this->validated($request);
+        $oldFile = $bill->income_proof_file;
+
+        if ($request->hasFile('income_proof_file')) {
+            $file = $request->file('income_proof_file');
+            $data['income_proof_file'] = $file->store('income-proofs', 'local');
+            $data['income_proof_original_name'] = $file->getClientOriginalName();
+        } elseif (! $request->boolean('keep_income_proof_file')) {
+            $data['income_proof_file'] = null;
+            $data['income_proof_original_name'] = null;
+        }
+
+        $bill->update($data);
+
+        if ($oldFile && $oldFile !== $bill->income_proof_file) {
+            Storage::disk('local')->delete($oldFile);
+        }
+
+        $this->storePdf($bill);
+
+        return redirect()->route('bills.show', $bill)->with('success', "Bill {$bill->bill_no} updated successfully.");
+    }
+
+    public function destroy(Bill $bill)
+    {
+        $billNo = $bill->bill_no;
+
+        Storage::disk('local')->delete(array_filter([$bill->pdf_path, $bill->income_proof_file]));
+        $bill->delete();
+
+        return redirect()->route('bills.index')->with('success', "Bill {$billNo} deleted.");
+    }
+
     public function print(Bill $bill)
     {
         return view('bills.pdf', $this->receiptVars($this->billArray($bill), $bill->company) + ['autoPrint' => true]);

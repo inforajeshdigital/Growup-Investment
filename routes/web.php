@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/bills/preview', [BillController::class, 'showPreview'])->name('bills.preview.show');
     Route::post('/bills', [BillController::class, 'store'])->name('bills.store');
     Route::get('/bills/{bill}', [BillController::class, 'show'])->name('bills.show');
+    Route::get('/bills/{bill}/edit', [BillController::class, 'edit'])->name('bills.edit');
+    Route::put('/bills/{bill}', [BillController::class, 'update'])->name('bills.update');
+    Route::delete('/bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
     Route::get('/bills/{bill}/pdf', [BillController::class, 'pdf'])->name('bills.pdf');
     Route::get('/bills/{bill}/print', [BillController::class, 'print'])->name('bills.print');
     Route::get('/bills/{bill}/income-proof', [BillController::class, 'incomeProof'])->name('bills.income-proof');
