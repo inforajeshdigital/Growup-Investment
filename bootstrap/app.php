@@ -11,7 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Apply new database migrations automatically after a deploy
+        $middleware->prepend(\App\Http\Middleware\RunPendingMigrations::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
