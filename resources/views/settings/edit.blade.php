@@ -94,6 +94,123 @@
     </div>
 </form>
 
+{{-- ============ Company profile / About page ============ --}}
+@php $p = fn ($key) => old($key, $company->{$key}); @endphp
+<h2 class="h5 mt-5 mb-1" id="profile">Company Profile (About Page)</h2>
+<p class="text-muted small mb-3">
+    Shown on the public About page and in the Company Profile PDF, together with the logo, name, tagline,
+    address and contact details above. Empty fields are not shown. For lists, write one item per line.
+</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge {{ $company->about_published ? 'text-bg-success' : 'text-bg-secondary' }}">
+                {{ $company->about_published ? 'Public' : 'Hidden (only you can see it)' }}
+            </span>
+            <input type="text" id="aboutUrl" value="{{ route('about') }}" class="form-control form-control-sm" style="max-width: 320px;" readonly>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="copyAboutUrl"><i class="bi bi-clipboard"></i> Copy Link</button>
+            <a href="{{ route('about') }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> View Page</a>
+            <a href="{{ route('about.pdf') }}" class="btn btn-sm btn-git"><i class="bi bi-file-earmark-pdf"></i> Download Profile PDF</a>
+            <a href="https://wa.me/?text={{ rawurlencode($company->company_name.' - Company Profile: '.route('about')) }}" target="_blank" rel="noopener" class="btn btn-sm btn-success"><i class="bi bi-whatsapp"></i> Share on WhatsApp</a>
+            <button type="button" class="btn btn-sm btn-outline-dark d-none" id="nativeShare"><i class="bi bi-share"></i> Share</button>
+        </div>
+        @unless ($company->about_published)
+            <div class="form-text mt-2">Tick "Make About page public" below and save, before you share the link.</div>
+        @endunless
+    </div>
+</div>
+
+<form method="POST" action="{{ route('settings.profile.update') }}" class="card mb-3">
+    @csrf
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label" for="about_us">About Us</label>
+                <textarea id="about_us" name="about_us" rows="5" class="form-control @error('about_us', 'profile') is-invalid @enderror" placeholder="Who you are, what you do, since when...">{{ $p('about_us') }}</textarea>
+                @error('about_us', 'profile')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="mission">Our Mission</label>
+                <textarea id="mission" name="mission" rows="3" class="form-control">{{ $p('mission') }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="vision">Our Vision</label>
+                <textarea id="vision" name="vision" rows="3" class="form-control">{{ $p('vision') }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="services">Services (one per line)</label>
+                <textarea id="services" name="services" rows="5" class="form-control" placeholder="Investment Planning&#10;Portfolio Management&#10;...">{{ $p('services') }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="highlights">Why Choose Us (one per line)</label>
+                <textarea id="highlights" name="highlights" rows="5" class="form-control" placeholder="Transparent process&#10;Dedicated support&#10;...">{{ $p('highlights') }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="key_people">Directors / Key People (one per line)</label>
+                <textarea id="key_people" name="key_people" rows="3" class="form-control" placeholder="Name - Director&#10;Name - Manager">{{ $p('key_people') }}</textarea>
+                <div class="form-text">Write as "Name - Designation".</div>
+            </div>
+            <div class="col-md-6">
+                <div class="row g-3">
+                    <div class="col-sm-7">
+                        <label class="form-label" for="cin_no">CIN (Company Reg. No.)</label>
+                        <input type="text" id="cin_no" name="cin_no" value="{{ $p('cin_no') }}" class="form-control text-uppercase">
+                    </div>
+                    <div class="col-sm-5">
+                        <label class="form-label" for="established_year">Established</label>
+                        <input type="text" id="established_year" name="established_year" value="{{ $p('established_year') }}" class="form-control" placeholder="e.g. 2021">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="whatsapp">WhatsApp Number</label>
+                        <input type="text" id="whatsapp" name="whatsapp" value="{{ $p('whatsapp') }}" class="form-control" placeholder="10-digit mobile number">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="facebook">Facebook Link</label>
+                <input type="text" id="facebook" name="facebook" value="{{ $p('facebook') }}" class="form-control" placeholder="facebook.com/...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="instagram">Instagram Link</label>
+                <input type="text" id="instagram" name="instagram" value="{{ $p('instagram') }}" class="form-control" placeholder="instagram.com/...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="linkedin">LinkedIn Link</label>
+                <input type="text" id="linkedin" name="linkedin" value="{{ $p('linkedin') }}" class="form-control" placeholder="linkedin.com/company/...">
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="about_published" value="1" id="about_published" @checked(old('about_published', $company->about_published))>
+                    <label class="form-check-label fw-semibold" for="about_published">Make About page public (anyone with the link can open it)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-white text-end">
+        <button class="btn btn-git px-4"><i class="bi bi-save"></i> Save Company Profile</button>
+    </div>
+</form>
+
+@push('scripts')
+<script>
+(function () {
+    var url = document.getElementById('aboutUrl').value;
+    document.getElementById('copyAboutUrl').addEventListener('click', function () {
+        var btn = this;
+        var done = function () { btn.innerHTML = '<i class="bi bi-check2"></i> Copied'; setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy Link'; }, 2000); };
+        if (navigator.clipboard) { navigator.clipboard.writeText(url).then(done); }
+        else { var i = document.getElementById('aboutUrl'); i.select(); document.execCommand('copy'); done(); }
+    });
+    if (navigator.share) {
+        var s = document.getElementById('nativeShare');
+        s.classList.remove('d-none');
+        s.addEventListener('click', function () { navigator.share({ title: document.title, url: url }).catch(function () {}); });
+    }
+})();
+</script>
+@endpush
+
 {{-- ============ SMTP (Gmail) ============ --}}
 <h2 class="h5 mt-5 mb-1" id="smtp">Email (SMTP) Settings</h2>
 <p class="text-muted small mb-3">Used to send the OTP for "Forgot password". Gmail is filled in by default.</p>

@@ -24,6 +24,32 @@ class SettingsController extends Controller
         ]);
     }
 
+    /** Company profile shown on the public /about page and in the profile PDF. */
+    public function updateProfile(Request $request)
+    {
+        $data = $request->validateWithBag('profile', [
+            'about_us' => ['nullable', 'string', 'max:5000'],
+            'mission' => ['nullable', 'string', 'max:2000'],
+            'vision' => ['nullable', 'string', 'max:2000'],
+            'services' => ['nullable', 'string', 'max:3000'],
+            'highlights' => ['nullable', 'string', 'max:3000'],
+            'key_people' => ['nullable', 'string', 'max:2000'],
+            'cin_no' => ['nullable', 'string', 'max:30'],
+            'established_year' => ['nullable', 'string', 'max:10'],
+            'whatsapp' => ['nullable', 'string', 'max:20'],
+            'facebook' => ['nullable', 'string', 'max:255'],
+            'instagram' => ['nullable', 'string', 'max:255'],
+            'linkedin' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $data['cin_no'] = isset($data['cin_no']) ? strtoupper($data['cin_no']) : null;
+        $data['about_published'] = $request->boolean('about_published');
+
+        CompanySetting::current()->update($data);
+
+        return redirect()->to(route('settings.edit').'#profile')->with('success', 'Company profile saved.');
+    }
+
     /** SMTP (Gmail) settings used for password-reset OTP emails. */
     public function updateMail(Request $request)
     {
