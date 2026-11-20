@@ -33,9 +33,32 @@ class CompanyProfileController extends Controller
         ])->render();
 
         $pdf = Pdf::setOption(['isFontSubsettingEnabled' => true])->loadHTML($html)->setPaper('a4', 'portrait');
+        $pdf->render();
+        $this->addFooter($pdf->getDomPDF(), strtoupper($company->profileName()).' | COMPANY PROFILE');
+
         $filename = Str::slug($company->company_name ?: 'company').'-profile.pdf';
 
         return $request->boolean('inline') ? $pdf->stream($filename) : $pdf->download($filename);
+    }
+
+    /** Footer line with the company label and page number on every page except the cover. */
+    private function addFooter(\Dompdf\Dompdf $dompdf, string $label): void
+    {
+        $dompdf->getCanvas()->page_script(function (int $page, int $pages, $canvas, $fontMetrics) use ($label) {
+            if ($page === 1) {
+                return;
+            }
+
+            $font = $fontMetrics->getFont('Helvetica');
+            $grey = [0.48, 0.53, 0.6];
+            $width = $canvas->get_width();
+            $y = $canvas->get_height() - 36;
+            $pageText = 'Page '.$page;
+
+            $canvas->line(40, $y - 8, $width - 40, $y - 8, [0.88, 0.91, 0.94], 0.75);
+            $canvas->text(40, $y, $label, $font, 7.5, $grey);
+            $canvas->text($width - 40 - $fontMetrics->getTextWidth($pageText, $font, 7.5), $y, $pageText, $font, 7.5, $grey);
+        });
     }
 
     /** Public company logo (for the About page and link previews on WhatsApp etc.). */

@@ -98,8 +98,8 @@
 @php $p = fn ($key) => old($key, $company->{$key}); @endphp
 <h2 class="h5 mt-5 mb-1" id="profile">Company Profile (About Page)</h2>
 <p class="text-muted small mb-3">
-    Shown on the public About page and in the Company Profile PDF, together with the logo, name, tagline,
-    address and contact details above. Empty fields are not shown. For lists, write one item per line.
+    Used for the public About page and the Company Profile PDF (cover page + numbered sections), with the logo
+    and contact details from above. A section with empty text is left out and the numbering adjusts.
 </p>
 
 <div class="card mb-3">
@@ -124,48 +124,99 @@
 <form method="POST" action="{{ route('settings.profile.update') }}" class="card mb-3">
     @csrf
     <div class="card-body">
+        <h3 class="h6 text-uppercase text-muted mb-3">Cover Page</h3>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="profile_title">Profile Title</label>
+                <textarea id="profile_title" name="profile_title" rows="2" class="form-control">{{ $p('profile_title') }}</textarea>
+                <div class="form-text">Press Enter where you want the title to break into a new line.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="profile_subtitle">Subtitle</label>
+                <input type="text" id="profile_subtitle" name="profile_subtitle" value="{{ $p('profile_subtitle') }}" class="form-control" placeholder="CORPORATE COMPANY PROFILE">
+                <label class="form-label mt-2" for="profile_focus_line">Focus Line</label>
+                <input type="text" id="profile_focus_line" name="profile_focus_line" value="{{ $p('profile_focus_line') }}" class="form-control" placeholder="INVESTMENT • SHARE MARKET • TRADING">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="profile_tagline">Tagline</label>
+                <textarea id="profile_tagline" name="profile_tagline" rows="2" class="form-control">{{ $p('profile_tagline') }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="cover_note">Cover Note</label>
+                <input type="text" id="cover_note" name="cover_note" value="{{ $p('cover_note') }}" class="form-control" placeholder="Prepared for clients, investors and business partners">
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="associations_summary">Business Associations (cover page text)</label>
+                <textarea id="associations_summary" name="associations_summary" rows="2" class="form-control">{{ $p('associations_summary') }}</textarea>
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <h3 class="h6 text-uppercase text-muted mb-3">Sections</h3>
         <div class="row g-3">
             <div class="col-12">
-                <label class="form-label" for="about_us">About Us</label>
-                <textarea id="about_us" name="about_us" rows="5" class="form-control @error('about_us', 'profile') is-invalid @enderror" placeholder="Who you are, what you do, since when...">{{ $p('about_us') }}</textarea>
+                <label class="form-label" for="about_us">1. Company Overview</label>
+                <textarea id="about_us" name="about_us" rows="6" class="form-control @error('about_us', 'profile') is-invalid @enderror">{{ $p('about_us') }}</textarea>
+                <div class="form-text">Leave an empty line between paragraphs.</div>
                 @error('about_us', 'profile')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-6">
-                <label class="form-label" for="mission">Our Mission</label>
-                <textarea id="mission" name="mission" rows="3" class="form-control">{{ $p('mission') }}</textarea>
+            <div class="col-12">
+                <label class="form-label" for="business_focus">2. Business Focus</label>
+                <textarea id="business_focus" name="business_focus" rows="4" class="form-control font-monospace small">{{ $p('business_focus') }}</textarea>
+                <div class="form-text">One per line: <code>TITLE | Description</code></div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label" for="vision">Our Vision</label>
+            <div class="col-12">
+                <label class="form-label" for="associations">3. Official Business Associations</label>
+                <textarea id="associations" name="associations" rows="3" class="form-control font-monospace small">{{ $p('associations') }}</textarea>
+                <div class="form-text">One per line: <code>Company Name | Description</code></div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="associations_note">Associations Note (small text)</label>
+                <textarea id="associations_note" name="associations_note" rows="2" class="form-control">{{ $p('associations_note') }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="vision">4. Our Vision</label>
                 <textarea id="vision" name="vision" rows="3" class="form-control">{{ $p('vision') }}</textarea>
             </div>
-            <div class="col-md-6">
-                <label class="form-label" for="services">Services (one per line)</label>
-                <textarea id="services" name="services" rows="5" class="form-control" placeholder="Investment Planning&#10;Portfolio Management&#10;...">{{ $p('services') }}</textarea>
+            <div class="col-12">
+                <label class="form-label" for="mission">5. Our Mission</label>
+                <textarea id="mission" name="mission" rows="5" class="form-control">{{ $p('mission') }}</textarea>
+                <div class="form-text">One point per line (shown as bullet points).</div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label" for="highlights">Why Choose Us (one per line)</label>
-                <textarea id="highlights" name="highlights" rows="5" class="form-control" placeholder="Transparent process&#10;Dedicated support&#10;...">{{ $p('highlights') }}</textarea>
+            <div class="col-12">
+                <label class="form-label" for="core_values">6. Core Values</label>
+                <textarea id="core_values" name="core_values" rows="6" class="form-control font-monospace small">{{ $p('core_values') }}</textarea>
+                <div class="form-text">One per line: <code>TITLE | Description</code> (shown 3 per row)</div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label" for="key_people">Directors / Key People (one per line)</label>
-                <textarea id="key_people" name="key_people" rows="3" class="form-control" placeholder="Name - Director&#10;Name - Manager">{{ $p('key_people') }}</textarea>
-                <div class="form-text">Write as "Name - Designation".</div>
+            <div class="col-12">
+                <label class="form-label" for="commitment">7. Our Commitment</label>
+                <textarea id="commitment" name="commitment" rows="4" class="form-control">{{ $p('commitment') }}</textarea>
             </div>
-            <div class="col-md-6">
-                <div class="row g-3">
-                    <div class="col-sm-7">
-                        <label class="form-label" for="cin_no">CIN (Company Reg. No.)</label>
-                        <input type="text" id="cin_no" name="cin_no" value="{{ $p('cin_no') }}" class="form-control text-uppercase">
-                    </div>
-                    <div class="col-sm-5">
-                        <label class="form-label" for="established_year">Established</label>
-                        <input type="text" id="established_year" name="established_year" value="{{ $p('established_year') }}" class="form-control" placeholder="e.g. 2021">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="whatsapp">WhatsApp Number</label>
-                        <input type="text" id="whatsapp" name="whatsapp" value="{{ $p('whatsapp') }}" class="form-control" placeholder="10-digit mobile number">
-                    </div>
-                </div>
+            <div class="col-12">
+                <label class="form-label" for="disclaimer">8. Important Information</label>
+                <textarea id="disclaimer" name="disclaimer" rows="4" class="form-control">{{ $p('disclaimer') }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="enquiries_text">Corporate Enquiries</label>
+                <textarea id="enquiries_text" name="enquiries_text" rows="2" class="form-control">{{ $p('enquiries_text') }}</textarea>
+                <div class="form-text">Address, email, website and mobile from the company details above are added below this text automatically.</div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <h3 class="h6 text-uppercase text-muted mb-3">Extra details (About page)</h3>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label" for="cin_no">CIN (Company Reg. No.)</label>
+                <input type="text" id="cin_no" name="cin_no" value="{{ $p('cin_no') }}" class="form-control text-uppercase">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="established_year">Established</label>
+                <input type="text" id="established_year" name="established_year" value="{{ $p('established_year') }}" class="form-control" placeholder="e.g. 2021">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="whatsapp">WhatsApp Number</label>
+                <input type="text" id="whatsapp" name="whatsapp" value="{{ $p('whatsapp') }}" class="form-control" placeholder="10-digit mobile number">
             </div>
             <div class="col-md-4">
                 <label class="form-label" for="facebook">Facebook Link</label>

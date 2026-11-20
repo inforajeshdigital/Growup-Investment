@@ -15,15 +15,19 @@ class CompanySetting extends Model
 
     /** Fields used only on the public About page and the company profile PDF. */
     public const PROFILE_FIELDS = [
-        'about_us', 'mission', 'vision', 'services', 'highlights', 'key_people', 'cin_no',
-        'established_year', 'whatsapp', 'facebook', 'instagram', 'linkedin', 'about_published',
+        'profile_title', 'profile_subtitle', 'profile_focus_line', 'profile_tagline', 'associations_summary',
+        'cover_note', 'about_us', 'business_focus', 'associations', 'associations_note', 'vision', 'mission',
+        'core_values', 'commitment', 'disclaimer', 'enquiries_text',
+        'cin_no', 'established_year', 'whatsapp', 'facebook', 'instagram', 'linkedin', 'about_published',
     ];
 
     protected $fillable = [
         'logo_path', 'company_name', 'address', 'mobile', 'email', 'pan_no', 'gst_no',
         'website', 'tagline', 'header_text', 'footer_text', 'authorized_person', 'signature_path',
-        'about_us', 'mission', 'vision', 'services', 'highlights', 'key_people', 'cin_no',
-        'established_year', 'whatsapp', 'facebook', 'instagram', 'linkedin', 'about_published',
+        'profile_title', 'profile_subtitle', 'profile_focus_line', 'profile_tagline', 'associations_summary',
+        'cover_note', 'about_us', 'business_focus', 'associations', 'associations_note', 'vision', 'mission',
+        'core_values', 'commitment', 'disclaimer', 'enquiries_text',
+        'cin_no', 'established_year', 'whatsapp', 'facebook', 'instagram', 'linkedin', 'about_published',
     ];
 
     protected function casts(): array
@@ -31,20 +35,45 @@ class CompanySetting extends Model
         return ['about_published' => 'boolean'];
     }
 
-    /** Non-empty lines of a multi-line field (services, highlights, key people). */
+    /** Non-empty lines of a multi-line field (mission points etc.). */
     public function lines(string $field): array
     {
         return array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $this->{$field}))));
     }
 
-    /** Key people as [['name' => ..., 'role' => ...]], from lines like "Name - Designation". */
-    public function people(): array
+    /** Paragraphs of a long text field (split on blank lines). */
+    public function paragraphs(string $field): array
+    {
+        return array_values(array_filter(array_map('trim', preg_split('/\R\s*\R/', (string) $this->{$field}))));
+    }
+
+    /** "Title | Description" lines as [['title' => ..., 'text' => ...]] (business focus, associations, core values). */
+    public function pairs(string $field): array
     {
         return array_map(function ($line) {
-            $parts = preg_split('/\s+[-–|]\s+/u', $line, 2);
+            $parts = explode('|', $line, 2);
 
-            return ['name' => trim($parts[0]), 'role' => trim($parts[1] ?? '')];
-        }, $this->lines('key_people'));
+            return ['title' => trim($parts[0]), 'text' => trim($parts[1] ?? '')];
+        }, $this->lines($field));
+    }
+
+    /** Profile title on one line (for page footers / headings). */
+    public function profileName(): string
+    {
+        $title = trim(preg_replace('/\s+/', ' ', (string) $this->profile_title));
+
+        return $title !== '' ? $title : (string) $this->company_name;
+    }
+
+    /** Contact details from the company settings, for the "Corporate Enquiries" block. */
+    public function contactParts(): array
+    {
+        return array_values(array_filter([
+            $this->address,
+            $this->email,
+            $this->website,
+            $this->mobile,
+        ]));
     }
 
     /** Website as a full URL (adds https:// if missing). */
